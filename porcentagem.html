@@ -6,33 +6,47 @@
     <title>Calculadora de Porcentagem</title>
     <style>
         :root {
-            --primary-bg: #0f172a;
-            --secondary-bg: #1e293b;
-            --accent-bg: #334155;
-            --text-primary: #f8fafc;
+            --primary-bg: #0a1929;
+            --secondary-bg: #1a2b42;
+            --accent-bg: #233656;
+            --text-primary: #ffffff;
             --text-secondary: #94a3b8;
             --accent-color: #3b82f6;
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --error-color: #ef4444;
-            --border-color: #475569;
-            --display-bg: #020617;
-            --display-glow: #3b82f6;
+            --border-color: #2d4b6d;
+            --display-bg: #061325;
+            --display-glow: rgba(59, 130, 246, 0.5);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+            --input-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            --button-gradient: linear-gradient(135deg, var(--accent-color), #2563eb);
+            --success-gradient: linear-gradient(135deg, var(--success-color), #059669);
+            --warning-gradient: linear-gradient(135deg, var(--warning-color), #d97706);
         }
 
         [data-theme="light"] {
-            --primary-bg: #ffffff;
-            --secondary-bg: #f8fafc;
-            --accent-bg: #e2e8f0;
+            --primary-bg: #f0f7ff;
+            --secondary-bg: #ffffff;
+            --accent-bg: #f1f5f9;
             --text-primary: #0f172a;
             --text-secondary: #475569;
-            --accent-color: #3b82f6;
+            --accent-color: #2563eb;
             --success-color: #059669;
             --warning-color: #d97706;
             --error-color: #dc2626;
-            --border-color: #cbd5e1;
-            --display-bg: #0f172a;
-            --display-glow: #3b82f6;
+            --border-color: #e2e8f0;
+            --display-bg: #ffffff;
+            --display-glow: rgba(37, 99, 235, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            --input-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+            --button-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
+            --success-gradient: linear-gradient(135deg, #10b981, #059669);
+            --warning-gradient: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
         * {
@@ -77,54 +91,102 @@
         .header p {
             color: var(--text-secondary);
             font-size: 1.1rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .calculator {
             background: var(--secondary-bg);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            animation: fadeIn 0.5s ease-out;
         }
 
         .shortcut-buttons {
             display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
             justify-content: center;
+            padding: 0.5rem;
         }
 
         .shortcut-btn {
-            background: var(--accent-bg);
+            background: var(--primary-bg);
             color: var(--text-primary);
             border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
             font-size: 1.2rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shortcut-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .shortcut-btn:hover {
             background: var(--accent-color);
             color: white;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .shortcut-btn:hover::after {
+            opacity: 1;
         }
 
         .calc-section {
             margin-bottom: 2rem;
-            padding: 1.5rem;
+            padding: 2rem;
             background: var(--accent-bg);
-            border-radius: 15px;
-            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .calc-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
         }
 
         .calc-section h2 {
             color: var(--accent-color);
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .calc-section h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 2px;
         }
 
         .input-group {
@@ -150,17 +212,20 @@
         .input-field input {
             background: var(--primary-bg);
             border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
+            border-radius: 12px;
+            padding: 1rem;
             color: var(--text-primary);
-            font-size: 1rem;
+            font-size: 1.1rem;
             transition: all 0.3s ease;
+            box-shadow: var(--input-shadow);
+            width: 100%;
         }
 
         .input-field input:focus {
             outline: none;
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px var(--display-glow);
+            transform: translateY(-1px);
         }
 
         .operator {
@@ -171,34 +236,69 @@
         }
 
         .result {
-            font-size: 1.5rem;
-            color: var(--success-color);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
             text-align: center;
-            margin-top: 1rem;
-            padding: 1rem;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
             background: var(--display-bg);
-            border-radius: 10px;
+            border-radius: 16px;
             border: 2px solid var(--border-color);
+            box-shadow: 0 0 20px var(--display-glow);
+            transition: all 0.3s ease;
+            animation: pulseGlow 2s infinite;
         }
 
         .btn {
-            background: var(--accent-color);
+            background: var(--button-gradient);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 1rem 1.5rem;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
             margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                120deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
-            background: var(--success-color);
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 10px 25px var(--display-glow);
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+        }
+
+        .btn-warning {
+            background: var(--warning-gradient);
         }
 
         .theme-toggle {
@@ -308,6 +408,29 @@
 
             .button-group {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                box-shadow: 0 0 20px var(--display-glow);
+            }
+            50% {
+                box-shadow: 0 0 30px var(--display-glow);
+            }
+            100% {
+                box-shadow: 0 0 20px var(--display-glow);
             }
         }
     </style>
@@ -580,23 +703,28 @@
                 return;
             }
 
-            const sum = proportions.reduce((a, b) => a + b, 0);
-            if (sum !== 100) {
-                alert('A soma das proporções deve ser 100%');
-                return;
-            }
-
             const values = proportions.map(p => (total * p) / 100);
             
             const table = document.createElement('table');
             table.className = 'distribution-table';
+            
+            // Cabeçalho da tabela
             table.innerHTML = `
-                ${values.map((value, i) => `
-                    <tr>
-                        <td>Parte ${i + 1} (${proportions[i]}%)</td>
-                        <td>${value.toFixed(2)}</td>
-                    </tr>
-                `).join('')}
+                <tr>
+                    <td><strong>Proporção</strong></td>
+                    <td><strong>Valor</strong></td>
+                    <td><strong>Restante</strong></td>
+                </tr>
+                ${values.map((value, i) => {
+                    const restante = total - value;
+                    return `
+                        <tr>
+                            <td>Parte ${i + 1} (${proportions[i]}%)</td>
+                            <td>R$ ${value.toFixed(2)}</td>
+                            <td>R$ ${restante.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }).join('')}
             `;
 
             const resultDiv = document.getElementById('distributionResult');
