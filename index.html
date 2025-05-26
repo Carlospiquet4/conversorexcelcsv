@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONVERSOR DE PLANILHAS DE EXCEL PRA CSV</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --background: #F5F7FA;
+            --surface: #FFFFFF;
+            --text: #1F2937;
+            --border: #E5E7EB;
+        }
+
+        [data-theme="dark"] {
+            --primary: #6366F1;
+            --primary-hover: #4F46E5;
+            --background: #111827;
+            --surface: #1F2937;
+            --text: #F9FAFB;
+            --border: #374151;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .main-content {
+            max-width: 1000px;
+            width: 90%;
+            margin: 0 auto;
+            padding: 2.5rem;
+            background-color: var(--surface);
+            position: relative;
+            z-index: 1;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .title-section {
+            text-align: center;
+            background-color: transparent;
+            padding: 1.5rem 0 2rem 0;
+            margin-bottom: 3rem;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .title-section h1 {
+            font-size: 2.5rem;
+            color: #1F2937;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .header-banner {
+            background-color: #004AAD;
+            width: 100%;
+            padding: 1rem 0;
+            margin-bottom: 0;
+        }
+
+        .logo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo-container img {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            margin: 1rem auto;
+            padding: 0 1rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 2px dashed #E5E7EB;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: var(--primary);
+        }
+
+        .excel-view {
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            overflow: auto;
+            max-height: 400px;
+            position: relative;
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .excel-view table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .excel-view th {
+            background-color: var(--surface);
+            color: var(--text);
+            font-weight: 600;
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .excel-view td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            background-color: var(--surface);
+        }
+
+        tr:nth-child(even) td {
+            background-color: var(--background);
+        }
+
+        tr:hover td {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .excel-view::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .excel-view::-webkit-scrollbar-track {
+            background: var(--border);
+        }
+
+        .excel-view::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .excel-view::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-hover);
+        }
+
+        .table-container {
+            overflow: auto;
+            max-height: 400px;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+        }
+
+        .file-input-container {
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+            border: 2px dashed #D1D5DB;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .field-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .select-all-container {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .checkbox-wrapper:hover {
+            background-color: var(--background);
+            border-color: var(--primary);
+        }
+
+        .checkbox-wrapper input[type="checkbox"]:checked + label {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .checkbox-wrapper input[type="checkbox"]:disabled + label {
+            color: #6B7280;
+            font-style: italic;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 1.2rem;
+            height: 1.2rem;
+            border-radius: 0.25rem;
+            border: 2px solid #D1D5DB;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper input[type="checkbox"]:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .selected-fields-summary {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #F0F9FF;
+            border-radius: 0.5rem;
+            border: 1px solid #BAE6FD;
+            color: #0369A1;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .button-container {
+                justify-content: center;
+            }
+        }
+
+        [role="status"] {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.75rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header-banner">
+        <div class="logo-container">
+            <img src="https://i.imgur.com/6C6Gmvp.jpeg" alt="Logo ESAP" />
+            <img src="https://i.imgur.com/6C6Gmvp.jpeg" alt="Logo PGE" />
+        </div>
+    </header>
+
+    <main class="main-content">
+        <h1 class="text-3xl font-bold mb-6 title-section">CONVERSOR DE PLANILHAS DE EXCEL PRA CSV</h1>
+
+        <section class="card" aria-labelledby="section-import">
+            <h2 id="section-import" class="text-xl font-semibold mb-4">1. Importar Arquivo Excel</h2>
+            
+            <div class="file-input-container">
+                <label class="file-input-label" for="fileInput">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span>Arraste seu arquivo aqui ou clique para selecionar</span>
+                </label>
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" aria-label="Selecione um arquivo Excel ou CSV">
+            </div>
+            <div id="file-info" class="text-sm text-gray-600" aria-live="polite"></div>
+            
+            <div id="fieldSelection" class="mt-6 hidden" aria-labelledby="field-selection-title">
+                <h3 id="field-selection-title" class="text-lg font-medium mb-4">Selecione os campos para extrair:</h3>
+                
+                <div class="select-all-container mb-4 p-3 bg-gray-50 rounded-lg">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="selectAll" aria-label="Selecionar todos os campos">
+                        <span class="font-medium">Selecionar Todos</span>
+                    </label>
+                </div>
+
+                <div class="field-options" role="group" aria-label="Opções de campos">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="nome_completo" checked disabled id="field-nome">
+                        <label for="field-nome">Nome Completo (Obrigatório)</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="turma" checked disabled id="field-turma">
+                        <label for="field-turma">Turma (Obrigatório)</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="matricula_esap" checked disabled id="field-matricula">
+                        <label for="field-matricula">Matrícula ESAP (Obrigatório)</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="email" id="field-email">
+                        <label for="field-email">Email</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="cpf" id="field-cpf">
+                        <label for="field-cpf">CPF</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="sexo" id="field-sexo">
+                        <label for="field-sexo">Sexo</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="nomepai" id="field-nomepai">
+                        <label for="field-nomepai">Nome do Pai</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="nomemae" id="field-nomemae">
+                        <label for="field-nomemae">Nome da Mãe</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="dtnasc" id="field-dtnasc">
+                        <label for="field-dtnasc">Data de Nascimento</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="celular" id="field-celular">
+                        <label for="field-celular">Celular</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="docidentif" id="field-docidentif">
+                        <label for="field-docidentif">Documento de Identificação</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="orgexpident" id="field-orgexpident">
+                        <label for="field-orgexpident">Órgão Expedidor</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="dataexpedicao" id="field-dataexpedicao">
+                        <label for="field-dataexpedicao">Data de Expedição</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="endereco" id="field-endereco">
+                        <label for="field-endereco">Endereço</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="bairro" id="field-bairro">
+                        <label for="field-bairro">Bairro</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="cidade" id="field-cidade">
+                        <label for="field-cidade">Cidade</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="uf" id="field-uf">
+                        <label for="field-uf">UF</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" value="cep" id="field-cep">
+                        <label for="field-cep">CEP</label>
+                    </div>
+                </div>
+
+                <button id="readBtn" class="mt-6" disabled aria-label="Ler arquivo e processar dados">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    </svg>
+                    Processar Arquivo
+                </button>
+            </div>
+        </section>
+        
+        <section class="card hide" id="originalDataContainer" aria-labelledby="section-originais">
+            <h2 id="section-originais" class="text-xl font-semibold mb-4">2. Dados Originais</h2>
+              <div class="excel-view">
+                <div id="tableContainer"></div>
+            </div>
+            
+            <div class="button-container">
+                <button id="transformBtn" aria-label="Transformar dados originais em novos campos">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 7 9-7M4 11h16" />
+                    </svg>
+                    Transformar
+                </button>
+            </div>
+        </section>
+        
+        <section class="card hide" id="transformedDataContainer" aria-labelledby="section-transformados">
+            <h2 id="section-transformados" class="text-xl font-semibold mb-4">3. Dados Transformados</h2>
+              <div class="excel-view">
+                <div id="transformedTableContainer"></div>
+            </div>
+            
+            <div class="button-container">
+                <button id="downloadBtn" aria-label="Baixar arquivo para Moodle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 7 9-7M4 11h16" />
+                    </svg>
+                    Moodle CSV
+                </button>
+
+                <button id="downloadFullBtn" aria-label="Baixar arquivo completo">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 7 9-7M4 11h16" />
+                    </svg>
+                    CSV Completo
+                </button>
+
+                <button id="backBtn" aria-label="Voltar para dados originais">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l-5 5 5 5M6 12h15" />
+                    </svg>
+                    Voltar
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+        <svg xmlns="http://www.w3.org/2000/svg" class="sun-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="moon-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display: none;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
+    <div id="notifications" role="status" aria-live="polite"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = themeToggle.querySelector('.sun-icon');
+        const moonIcon = themeToggle.querySelector('.moon-icon');
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcons(savedTheme);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcons(newTheme);
+        });
+
+        function updateThemeIcons(theme) {
+            if (theme === 'dark') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+        }
+
+        // Utility functions
+        class Utils {
+            static showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type}`;
+                notification.textContent = message;
+                notification.setAttribute('role', 'alert');
+                
+                const notificationsContainer = document.getElementById('notifications');
+                notificationsContainer.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+            }
+
+            static formatarData(data) {
+                if (!data) return '';
+                
+                let dataLimpa = String(data).replace(/[^\d\/]/g, '');
+                let partes = dataLimpa.split('/');
+                
+                if (partes.length !== 3) return data;
+
+                let dia = partes[0].padStart(2, '0');
+                let mes = partes[1].padStart(2, '0');
+                let ano = partes[2];
+
+                if (ano.length === 2) {
+                    ano = parseInt(ano);
+                    ano = ano > 50 ? '19' + String(ano).padStart(2, '0') : '20' + String(ano).padStart(2, '0');
+                }
+                
+                ano = String(ano).padStart(4, '20');
+                
+                return `${dia}/${mes}/${ano}`;
+            }            static convertToCSV(data) {
+                return data.map(row => {
+                    return row.map(cell => {
+                        const value = String(cell || '').trim();
+                        // Se o valor contiver vírgula ou ponto-e-vírgula, envolver em aspas duplas
+                        if (value.includes(',') || value.includes(';')) {
+                            return `"${value}"`;
+                        }
+                        return value;
+                    }).join(';');
+                }).join('\n');
+            }
+
+            static createTable(data, container) {
+                if (!data || data.length === 0) return;
+
+                const table = document.createElement('table');
+                table.setAttribute('role', 'table');
+                
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                data[0].forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    th.setAttribute('scope', 'col');
+                    headerRow.appendChild(th);
+                });
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                const tbody = document.createElement('tbody');
+                
+                for (let i = 1; i < data.length; i++) {
+                    const row = document.createElement('tr');
+                    
+                    data[i].forEach((cell, index) => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        if (index === 0) {
+                            td.setAttribute('scope', 'row');
+                        }
+                        row.appendChild(td);
+                    });
+                    
+                    tbody.appendChild(row);
+                }
+                
+                table.appendChild(tbody);
+                container.innerHTML = '';
+                container.appendChild(table);
+            }
+        }        class FileProcessor {
+            constructor() {
+                this.workbookData = [];
+                this.csvContent = '';
+                this.transformedContent = '';
+                this.selectedFile = null;
+                this.fullData = null;
+            }
+
+            async processFile(file) {
+                try {
+                    const data = await this.readFileAsArrayBuffer(file);
+                    await this.processExcelData(data);
+                    Utils.showNotification('Arquivo processado com sucesso!');
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao processar arquivo:', error);
+                    Utils.showNotification(error.message, 'error');
+                    return false;
+                }
+            }
+
+            readFileAsArrayBuffer(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            processExcelData(data) {
+                const workbook = XLSX.read(data, {
+                    type: 'array',
+                    codepage: 65001,
+                    cellDates: true,
+                    dateNF: 'dd/mm/yyyy'
+                });
+
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                let rawData = XLSX.utils.sheet_to_json(worksheet, {
+                    header: 1,
+                    raw: false,
+                    defval: '',
+                    dateNF: 'dd/mm/yyyy'
+                });
+
+                if (rawData.length < 2) {
+                    throw new Error('O arquivo não contém dados suficientes.');
+                }                // Processar dados com validação melhorada
+                this.workbookData = this.processRawData(rawData);
+                this.csvContent = Utils.convertToCSV(this.workbookData);
+                
+                // Atualizar interface
+                Utils.createTable(this.workbookData, document.getElementById('tableContainer'));
+                
+                return true;
+            }
+
+            processRawData(rawData) {
+                const headers = rawData[0].map(h => String(h).toLowerCase().trim());
+                const requiredColumns = ['nome completo', 'turma', 'matrícula esap'];
+                
+                // Validar colunas obrigatórias
+                const missingColumns = requiredColumns.filter(col => 
+                    !headers.some(h => h.includes(col))
+                );
+
+                if (missingColumns.length > 0) {
+                    throw new Error(`Colunas obrigatórias faltando: ${missingColumns.join(', ')}`);
+                }
+
+                // Obter campos selecionados
+                const selectedFields = Array.from(document.querySelectorAll('#fieldSelection .field-options input[type="checkbox"]'))
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                // Mapear índices das colunas selecionadas
+                const selectedIndices = selectedFields.map(field => {
+                    let index = -1;
+                    switch(field) {
+                        case 'nome_completo':
+                            index = headers.findIndex(h => h.includes('nome completo'));
+                            break;
+                        case 'turma':
+                            index = headers.findIndex(h => h.includes('turma'));
+                            break;
+                        case 'matricula_esap':
+                            index = headers.findIndex(h => h.includes('matrícula esap') || h.includes('matricula esap'));
+                            break;
+                        case 'email':
+                            index = headers.findIndex(h => h.includes('email'));
+                            break;
+                        case 'cpf':
+                            index = headers.findIndex(h => h.includes('cpf'));
+                            break;
+                        case 'sexo':
+                            index = headers.findIndex(h => h.includes('sexo'));
+                            break;
+                        case 'nomepai':
+                            index = headers.findIndex(h => h.includes('nomepai') || h.includes('nome do pai') || h.includes('nome pai'));
+                            break;
+                        case 'nomemae':
+                            index = headers.findIndex(h => h.includes('nomemae') || h.includes('nome da mae') || h.includes('nome mae'));
+                            break;
+                        case 'dtnasc':
+                            index = headers.findIndex(h => h.includes('dtnasc') || h.includes('data de nascimento') || h.includes('data nasc'));
+                            break;
+                        case 'celular':
+                            index = headers.findIndex(h => h.includes('celular'));
+                            break;
+                        case 'docidentif':
+                            index = headers.findIndex(h => h.includes('docidentif') || h.includes('documento de identificacao'));
+                            break;
+                        case 'orgexpident':
+                            index = headers.findIndex(h => h.includes('orgexpident') || h.includes('orgao expedidor'));
+                            break;
+                        case 'dataexpedicao':
+                            index = headers.findIndex(h => h.includes('dataexpedicao') || h.includes('data de expedicao'));
+                            break;
+                        case 'endereco':
+                            index = headers.findIndex(h => h.includes('endereco'));
+                            break;
+                        case 'bairro':
+                            index = headers.findIndex(h => h.includes('bairro'));
+                            break;
+                        case 'cidade':
+                            index = headers.findIndex(h => h.includes('cidade'));
+                            break;
+                        case 'uf':
+                            index = headers.findIndex(h => h.includes('uf'));
+                            break;
+                        case 'cep':
+                            index = headers.findIndex(h => h.includes('cep'));
+                            break;
+                    }
+                    return { field, index };
+                }).filter(item => item.index !== -1);
+
+                // Criar novo conjunto de dados apenas com as colunas selecionadas
+                return rawData.map((row, rowIndex) => {
+                    if (rowIndex === 0) {
+                        // Retornar apenas os cabeçalhos selecionados na ordem correta
+                        return selectedFields;
+                    }
+                    
+                    // Para cada linha de dados, retornar apenas as colunas selecionadas
+                    return selectedIndices.map(({ index }) => {
+                        const value = row[index] || '';
+                        const header = headers[index];
+
+                        // Aplicar formatação específica baseada no tipo de coluna
+                        if (header.includes('data')) {
+                            return Utils.formatarData(value);
+                        } else if (header.includes('sexo')) {
+                            return this.formatSexo(value);
+                        }
+                        return value;
+                    });
+                });
+            }
+
+            formatSexo(value) {
+                const sexoValue = String(value).trim().toUpperCase();
+                return sexoValue === 'M' ? 'Masculino' : 
+                       sexoValue === 'F' ? 'Feminino' : value;
+            }
+
+            transformData() {
+                if (!this.workbookData || this.workbookData.length < 2) {
+                    throw new Error('Não há dados para transformar.');
+                }
+
+                // Encontrar índices das colunas necessárias
+                const headers = this.workbookData[0];
+                const matriculaIndex = headers.indexOf('matricula_esap');
+                const nomeIndex = headers.indexOf('nome_completo');
+                const turmaIndex = headers.indexOf('turma');
+
+                if (matriculaIndex === -1 || nomeIndex === -1 || turmaIndex === -1) {
+                    throw new Error('Colunas obrigatórias não encontradas.');
+                }
+
+                // Preparar dados do Moodle
+                const moodleHeaders = ['username', 'firstname', 'lastname', 'cohort1'];
+                const moodleRows = [moodleHeaders];
+
+                // Preparar dados completos
+                this.fullData = this.workbookData;
+
+                // Processar cada linha
+                for (let i = 1; i < this.workbookData.length; i++) {
+                    const row = this.workbookData[i];
+                    if (!row[matriculaIndex] || !row[nomeIndex] || !row[turmaIndex]) {
+                        console.warn(`Linha ${i} ignorada por dados incompletos`);
+                        continue;
+                    }
+
+                    // Processar nome completo
+                    const nomeCompleto = String(row[nomeIndex]).trim();
+                    const nomeParts = nomeCompleto.split(' ');
+                    const firstName = nomeParts[0];
+                    const lastName = nomeParts.length > 1 ? nomeParts.slice(1).join(' ') : '';
+
+                    // Criar linha para Moodle
+                    const moodleRow = [
+                        row[matriculaIndex].trim(), // username
+                        firstName,                   // firstname
+                        lastName,                    // lastname
+                        `turma_${row[turmaIndex].toLowerCase()}` // cohort1
+                    ];
+
+                    moodleRows.push(moodleRow);
+                }                // Atualizar conteúdo transformado (Moodle)
+                this.transformedContent = Utils.convertToCSV(moodleRows);
+                Utils.createTable(moodleRows, document.getElementById('transformedTableContainer'));
+
+                // Mostrar o container transformado
+                document.getElementById('originalDataContainer').classList.add('hide');
+                document.getElementById('transformedDataContainer').classList.remove('hide');
+                
+                return true;
+            }
+
+            handleDownloadButtonClick() {
+                if (!this.transformedContent) {
+                    Utils.showNotification('Não há dados transformados para baixar.', 'error');
+                    return;
+                }
+
+                const BOM = "\uFEFF";
+                const csvContentWithBOM = BOM + this.transformedContent;
+                
+                const blob = new Blob([csvContentWithBOM], {
+                    type: 'text/csv;charset=utf-8;'
+                });
+                
+                saveAs(blob, 'moodle_import.csv');
+                Utils.showNotification('Arquivo para importação no Moodle baixado com sucesso!');
+            }
+
+            handleDownloadMoodleClick() {
+                if (!this.transformedContent) {
+                    Utils.showNotification('Não há dados transformados para baixar.', 'error');
+                    return;
+                }
+
+                const BOM = "\uFEFF";
+                const csvContentWithBOM = BOM + this.transformedContent;
+                
+                const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
+                saveAs(blob, 'moodle_import.csv');
+                Utils.showNotification('Arquivo para importação no Moodle baixado com sucesso!');
+            }        handleDownloadFullClick() {
+            if (!this.fullData || this.fullData.length < 2) {
+                Utils.showNotification('Não há dados completos para baixar.', 'error');
+                return;
+            }
+
+            // Obter os dados atuais
+            const headers = this.fullData[0];
+            const rows = this.fullData.slice(1);
+
+            // Mapear índices das colunas necessárias
+            const matriculaIndex = headers.indexOf('matricula_esap');
+            const nomeIndex = headers.indexOf('nome_completo');
+            const turmaIndex = headers.indexOf('turma');
+            const emailIndex = headers.indexOf('email');
+            const cpfIndex = headers.indexOf('cpf');
+            const sexoIndex = headers.indexOf('sexo');
+            const celularIndex = headers.indexOf('celular');
+            const enderecoIndex = headers.indexOf('endereco');
+            const bairroIndex = headers.indexOf('bairro');
+            const cidadeIndex = headers.indexOf('cidade');
+            const ufIndex = headers.indexOf('uf');
+
+            // Definir os novos cabeçalhos na ordem especificada
+            const newHeaders = [
+                'username',
+                'firstname',
+                'lastname',
+                'cohort1',
+                'email',
+                'idnumber',
+                'gender',
+                'phone1',
+                'address',
+                'city',
+                'country'
+            ];
+
+            // Função para converter UF para nome do estado
+            const convertUfToState = (uf) => {
+                const states = {
+                    'AC': 'Acre',
+                    'AL': 'Alagoas',
+                    'AP': 'Amapá',
+                    'AM': 'Amazonas',
+                    'BA': 'Bahia',
+                    'CE': 'Ceará',
+                    'DF': 'Distrito Federal',
+                    'ES': 'Espírito Santo',
+                    'GO': 'Goiás',
+                    'MA': 'Maranhão',
+                    'MT': 'Mato Grosso',
+                    'MS': 'Mato Grosso do Sul',
+                    'MG': 'Minas Gerais',
+                    'PA': 'Pará',
+                    'PB': 'Paraíba',
+                    'PR': 'Paraná',
+                    'PE': 'Pernambuco',
+                    'PI': 'Piauí',
+                    'RJ': 'Rio de Janeiro',
+                    'RN': 'Rio Grande do Norte',
+                    'RS': 'Rio Grande do Sul',
+                    'RO': 'Rondônia',
+                    'RR': 'Roraima',
+                    'SC': 'Santa Catarina',
+                    'SP': 'São Paulo',
+                    'SE': 'Sergipe',
+                    'TO': 'Tocantins'
+                };
+                return states[uf.toUpperCase()] || uf;
+            };
+
+            const newRows = rows.map(row => {
+                const nomeCompleto = String(row[nomeIndex]).trim();
+                const nomeParts = nomeCompleto.split(' ');
+                const firstName = nomeParts[0];
+                const lastName = nomeParts.length > 1 ? nomeParts.slice(1).join(' ') : '';
+                const endereco = row[enderecoIndex] || '';
+                const bairro = row[bairroIndex] || '';
+                const enderecoCompleto = endereco && bairro ? `${endereco}, ${bairro}` : endereco || bairro;
+                const sexo = row[sexoIndex] ? (row[sexoIndex].trim().toUpperCase() === 'F' ? 'Feminino' : 
+                                             row[sexoIndex].trim().toUpperCase() === 'M' ? 'Masculino' : 
+                                             row[sexoIndex]) : '';                return [
+                    row[matriculaIndex]?.trim() || '',                    // username
+                    firstName,                                            // firstname
+                    lastName,                                             // lastname
+                    `turma_${(row[turmaIndex] || '').toLowerCase()}`,    // cohort1
+                    row[emailIndex] || '',                               // email
+                    row[cpfIndex] || '',                                 // idnumber
+                    sexo,                                                // gender
+                    row[celularIndex] || '',                             // phone1
+                    enderecoCompleto,                                    // address
+                    row[cidadeIndex] || '',                             // city
+                    row[ufIndex]?.toUpperCase() || ''                   // country (UF format)
+                ];
+            });
+
+        const fullDataWithMoodle = [newHeaders, ...newRows];
+        const BOM = "\uFEFF";
+        const csvContent = Utils.convertToCSV(fullDataWithMoodle);
+        const csvContentWithBOM = BOM + csvContent;
+                
+                const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
+                saveAs(blob, 'dados_completos.csv');
+                Utils.showNotification('Arquivo com todos os campos baixado com sucesso!');
+            }
+        }
+
+        class UIController {
+            constructor() {
+                this.fileProcessor = new FileProcessor();
+                this.initializeEventListeners();
+                this.setupAccessibility();
+            }
+
+            initializeEventListeners() {
+                // File Input handling
+                this.setupFileInputHandlers();
+                
+                // Field Selection handling
+                this.setupFieldSelectionHandlers();
+                
+                // Button handlers
+                this.setupButtonHandlers();
+            }
+
+            setupAccessibility() {
+                // Adicionar atributos ARIA e roles apropriados
+                const fileInput = document.getElementById('fileInput');
+                fileInput.setAttribute('aria-label', 'Selecione um arquivo Excel ou CSV');
+                
+                // Adicionar instruções de acessibilidade
+                const instructions = document.createElement('p');
+                instructions.className = 'visually-hidden';
+                instructions.id = 'file-instructions';
+                instructions.textContent = 'Pressione espaço ou enter para abrir o seletor de arquivos';
+                document.querySelector('.file-input-container').appendChild(instructions);
+                fileInput.setAttribute('aria-describedby', 'file-instructions');
+            }
+
+            setupFileInputHandlers() {
+                const fileInput = document.getElementById('fileInput');
+                const dropZone = document.querySelector('.file-input-label');
+
+                // Manipuladores de drag and drop
+                this.setupDragAndDrop(dropZone, fileInput);
+
+                // Manipulador de seleção de arquivo
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length) {
+                        this.handleFileSelect(e.target.files[0]);
+                    }
+                });
+            }
+
+            setupDragAndDrop(dropZone, fileInput) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => {
+                        dropZone.classList.add('border-primary');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => {
+                        dropZone.classList.remove('border-primary');
+                    });
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    const files = e.dataTransfer.files;
+                    if (files.length) {
+                        fileInput.files = files;
+                        this.handleFileSelect(files[0]);
+                    }
+                });
+            }
+
+            setupFieldSelectionHandlers() {
+                const selectAllCheckbox = document.getElementById('selectAll');
+                const fieldCheckboxes = document.querySelectorAll(
+                    '#fieldSelection .field-options input[type="checkbox"]:not(:disabled)'
+                );
+
+                selectAllCheckbox.addEventListener('change', () => {
+                    fieldCheckboxes.forEach(checkbox => {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    });
+                });
+
+                fieldCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        selectAllCheckbox.checked = Array.from(fieldCheckboxes)
+                            .every(cb => cb.checked);
+                    });
+                });
+            }            setupButtonHandlers() {
+                const readBtn = document.getElementById('readBtn');
+                const transformBtn = document.getElementById('transformBtn');
+                const downloadBtn = document.getElementById('downloadBtn');
+                const downloadFullBtn = document.getElementById('downloadFullBtn');
+                const backBtn = document.getElementById('backBtn');
+
+                readBtn.addEventListener('click', async () => {
+                    const selectedFields = Array.from(document.querySelectorAll('#fieldSelection .field-options input[type="checkbox"]:checked'))
+                        .map(cb => cb.value);
+
+                    if (selectedFields.length < 3) {
+                        Utils.showNotification('Selecione pelo menos os campos obrigatórios.', 'error');
+                        return;
+                    }
+
+                    if (!this.fileProcessor.selectedFile) {
+                        Utils.showNotification('Por favor, selecione um arquivo primeiro.', 'error');
+                        return;
+                    }
+
+                    try {
+                        readBtn.disabled = true;
+                        this.showLoadingState(readBtn);
+                        
+                        const success = await this.fileProcessor.processFile(this.fileProcessor.selectedFile);
+                        
+                        if (success) {
+                            document.getElementById('originalDataContainer').classList.remove('hide');
+                            document.getElementById('transformedDataContainer').classList.add('hide');
+                            document.getElementById('originalDataContainer').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    } catch (error) {
+                        Utils.showNotification(error.message, 'error');
+                    } finally {
+                        this.hideLoadingState(readBtn);
+                        readBtn.disabled = false;
+                    }
+                });
+
+                transformBtn.addEventListener('click', () => {
+                    try {
+                        this.fileProcessor.transformData();
+                    } catch (error) {
+                        Utils.showNotification(error.message, 'error');
+                    }
+                });                downloadBtn.addEventListener('click', () => {
+                    this.fileProcessor.handleDownloadMoodleClick.call(this.fileProcessor);
+                });
+
+                downloadFullBtn.addEventListener('click', () => {
+                    this.fileProcessor.handleDownloadFullClick.call(this.fileProcessor);
+                });
+
+                backBtn.addEventListener('click', () => {
+                    document.getElementById('originalDataContainer').classList.remove('hide');
+                    document.getElementById('transformedDataContainer').classList.add('hide');
+                });
+            }            async handleFileSelect(file) {
+                const fileInfo = document.getElementById('file-info');
+                const fieldSelection = document.getElementById('fieldSelection');
+                
+                if (!file) return;
+
+                const isValidType = /\.(xlsx|xls|csv)$/i.test(file.name);
+                if (!isValidType) {
+                    Utils.showNotification(
+                        'Por favor, selecione um arquivo Excel (.xlsx, .xls) ou CSV',
+                        'error'
+                    );
+                    return;
+                }
+
+                this.fileProcessor.selectedFile = file;
+                fileInfo.textContent = `Arquivo selecionado: ${file.name}`;
+                fieldSelection.classList.remove('hidden');
+                document.getElementById('readBtn').disabled = false;
+            }
+
+            async handleReadButtonClick() {
+                const readBtn = document.getElementById('readBtn');
+                if (!this.fileProcessor.selectedFile) {
+                    Utils.showNotification('Por favor, selecione um arquivo primeiro.', 'error');
+                    return;
+                }
+
+                try {
+                    readBtn.disabled = true;
+                    this.showLoadingState(readBtn);
+
+                    const success = await this.fileProcessor.processFile(
+                        this.fileProcessor.selectedFile
+                    );
+
+                    if (success) {
+                        document.getElementById('originalDataContainer')
+                            .scrollIntoView({ behavior: 'smooth' });
+                    }
+                } catch (error) {
+                    Utils.showNotification(error.message, 'error');
+                } finally {
+                    this.hideLoadingState(readBtn);
+                    readBtn.disabled = false;
+                }
+            }
+
+            showLoadingState(button) {
+                button.innerHTML = `
+                    <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processando...
+                `;
+            }
+
+            hideLoadingState(button) {
+                button.innerHTML = 'Processar Arquivo';
+            }
+
+            handleTransformButtonClick() {
+                try {
+                    const result = this.fileProcessor.transformData();
+                    if (result) {
+                        document.getElementById('originalDataContainer').classList.add('hide');
+                        document.getElementById('transformedDataContainer').classList.remove('hide');
+                    }
+                } catch (error) {
+                    Utils.showNotification(error.message, 'error');
+                }
+            }
+
+            handleDownloadButtonClick() {
+                if (!this.fileProcessor.transformedContent) {
+                    Utils.showNotification('Não há dados transformados para baixar.', 'error');
+                    return;
+                }
+
+                const BOM = "\uFEFF";
+                const csvContentWithBOM = BOM + this.fileProcessor.transformedContent;
+                
+                const blob = new Blob([csvContentWithBOM], {
+                    type: 'text/csv;charset=utf-8;'
+                });
+                
+                saveAs(blob, 'moodle_import.csv');
+                Utils.showNotification('Arquivo para importação no Moodle baixado com sucesso!');
+            }
+
+            handleDownloadMoodleClick() {
+                if (!this.fileProcessor.transformedContent) {
+                    Utils.showNotification('Não há dados transformados para baixar.', 'error');
+                    return;
+                }
+
+                const BOM = "\uFEFF";
+                const csvContentWithBOM = BOM + this.fileProcessor.transformedContent;
+                
+                const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
+                saveAs(blob, 'moodle_import.csv');
+                Utils.showNotification('Arquivo para importação no Moodle baixado com sucesso!');
+            }
+
+            handleDownloadFullClick() {
+                if (!this.fileProcessor.fullData || this.fileProcessor.fullData.length < 2) {
+                    Utils.showNotification('Não há dados completos para baixar.', 'error');
+                    return;
+                }
+
+                const BOM = "\uFEFF";
+                const csvContent = Utils.convertToCSV(this.fileProcessor.fullData);
+                const csvContentWithBOM = BOM + csvContent;
+                
+                const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
+                saveAs(blob, 'dados_completos.csv');
+                Utils.showNotification('Arquivo com todos os campos baixado com sucesso!');
+            }
+
+            handleBackButtonClick() {
+                document.getElementById('transformedDataContainer').classList.add('hide');
+                document.getElementById('originalDataContainer').classList.remove('hide');
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new UIController();
+        });
+    </script>
+</body>
+</html>
