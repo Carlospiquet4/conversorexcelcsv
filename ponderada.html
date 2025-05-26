@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Média Ponderada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #0f172a;
+            --secondary-bg: #1e293b;
+            --accent-bg: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --border-color: #475569;
+            --display-bg: #020617;
+            --display-glow: #3b82f6;
+        }
+
+        [data-theme="light"] {
+            --primary-bg: #ffffff;
+            --secondary-bg: #f8fafc;
+            --accent-bg: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent-color: #3b82f6;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --border-color: #cbd5e1;
+            --display-bg: #0f172a;
+            --display-glow: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            padding-right: 80px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 60px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-color);
+        }
+
+        .theme-toggle .toggle-ball {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        [data-theme="light"] .theme-toggle .toggle-ball {
+            transform: translateX(24px);
+        }
+
+        .calculator {
+            background: var(--secondary-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .display {
+            background: var(--display-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            animation: scan 3s infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .display-result {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--display-glow);
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px var(--display-glow);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .display-calculation {
+            color: var(--text-secondary);
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .input-section {
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: end;
+            background: var(--accent-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .input-group:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-field label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-field input {
+            background: var(--primary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .remove-btn {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--warning-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f59e0b;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .explanation {
+            background: var(--accent-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .explanation h3 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .explanation p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .input-group {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .display-result {
+                font-size: 2rem;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-toggle {
+                position: relative;
+                margin: 1rem auto;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <div class="header">
+            <h1>Calculadora de Média Ponderada</h1>
+            <p>Calcule médias com pesos personalizados de forma profissional</p>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <div class="toggle-ball"></div>
+            </div>
+        </div>
+
+        <div class="calculator">
+            <div class="display">                <div class="display-result" id="result">0.00</div>
+                <div class="display-calculation" id="calculation">Aguardando dados...</div>
+            </div>
+
+            <div id="errorMessage"></div>
+
+            <div class="input-section" id="inputSection">
+                <div class="input-group fade-in">
+                    <div class="input-field">
+                        <label>Valor</label>
+                        <input type="number" step="0.01" placeholder="Ex: 8.5" class="value-input">
+                    </div>
+                    <div class="input-field">
+                        <label>Peso</label>
+                        <input type="number" step="0.01" placeholder="Ex: 2" class="weight-input">
+                    </div>
+                    <button class="remove-btn" onclick="removeInputGroup(this)" title="Remover">×</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="addInputGroup()">
+                    ➕ Adicionar Campo
+                </button>
+                <button class="btn btn-success" onclick="calculateWeightedAverage()">
+                    🧮 Calcular Média
+                </button>
+                <button class="btn btn-danger" onclick="clearAll()">
+                    🗑 Limpar Tudo
+                </button>
+                <button class="btn" onclick="copyResult()">
+                    📋 Copiar Resultado
+                </button>
+            </div>
+        </div>
+
+        <div class="explanation">
+            <h3>📚 O que é Média Ponderada?</h3>
+            <p>A média ponderada é um tipo de média onde cada valor tem um "peso" ou importância diferente no cálculo final. É muito útil para calcular notas finais, médias acadêmicas ou qualquer situação onde alguns valores são mais importantes que outros.</p>
+            <p><strong>Fórmula:</strong> Média = (valor₁ × peso₁ + valor₂ × peso₂ + ...) ÷ (peso₁ + peso₂ + ...)</p>
+            <p><strong>Exemplo:</strong> Se você tem nota 7 com peso 2 e nota 9 com peso 3, a média será: (7×2 + 9×3) ÷ (2+3) = 41÷5 = 8.2</p>
+        </div>
+    </div>
+
+    <script>
+        let inputCount = 0;
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+        }
+
+        function addInputGroup() {
+            inputCount++;
+            const inputSection = document.getElementById('inputSection');
+            const newGroup = document.createElement('div');
+            newGroup.className = 'input-group fade-in';
+            newGroup.innerHTML = `
+                <div class="input-field">
+                    <label>Valor</label>
+                    <input type="number" step="0.01" placeholder="Ex: 8.5" class="value-input">
+                </div>
+                <div class="input-field">
+                    <label>Peso</label>
+                    <input type="number" step="0.01" placeholder="Ex: 2" class="weight-input">
+                </div>
+                <button class="remove-btn" onclick="removeInputGroup(this)" title="Remover">×</button>
+            `;
+            inputSection.appendChild(newGroup);
+            
+            // Focus no primeiro input do novo grupo
+            newGroup.querySelector('.value-input').focus();
+        }
+
+        function removeInputGroup(button) {
+            const inputGroups = document.querySelectorAll('.input-group');
+            if (inputGroups.length > 1) {
+                button.parentElement.remove();
+            } else {
+                showError('Deve haver pelo menos um campo de entrada!');
+            }
+        }
+
+        function calculateWeightedAverage() {
+            const inputGroups = document.querySelectorAll('.input-group');
+            const values = [];
+            const weights = [];
+            let hasError = false;
+
+            clearError();
+
+            // Coleta e valida os dados
+            inputGroups.forEach((group, index) => {
+                const valueInput = group.querySelector('.value-input');
+                const weightInput = group.querySelector('.weight-input');
+                
+                const value = parseFloat(valueInput.value);
+                const weight = parseFloat(weightInput.value);                if (isNaN(value) || valueInput.value.trim() === '') {
+                    showError(`Campo "Valor" na linha ${index + 1} está vazio ou inválido!`);
+                    valueInput.focus();
+                    hasError = true;
+                    return;
+                }
+
+                if (isNaN(weight) || weightInput.value.trim() === '' || weight <= 0) {
+                    showError(`Campo "Peso" na linha ${index + 1} deve ser um número positivo!`);
+                    weightInput.focus();
+                    hasError = true;
+                    return;
+                }
+
+                values.push(value);
+                weights.push(weight);
+            });
+
+            if (hasError) return;
+
+            // Calcula a média ponderada
+            let numerator = 0;
+            let denominator = 0;
+            let calculationSteps = [];
+
+            for (let i = 0; i < values.length; i++) {
+                const product = values[i] * weights[i];
+                numerator += product;
+                denominator += weights[i];
+                calculationSteps.push(`${values[i]} × ${weights[i]} = ${product.toFixed(2)}`);
+            }
+
+            const weightedAverage = numerator / denominator;
+
+            // Atualiza o display
+            const resultElement = document.getElementById('result');
+            const calculationElement = document.getElementById('calculation');
+
+            // Animação do resultado
+            resultElement.style.transform = 'scale(1.1)';
+            resultElement.style.color = '#10b981';
+            
+            setTimeout(() => {
+                resultElement.style.transform = 'scale(1)';
+                resultElement.style.color = 'var(--display-glow)';
+            }, 300);            resultElement.textContent = weightedAverage.toFixed(2);
+            
+            const calculationText = `
+                Cálculo: ${calculationSteps.join(' + ')}
+                Soma dos produtos: ${numerator.toFixed(2)}
+                Soma dos pesos: ${denominator.toFixed(2)}
+                Resultado: ${numerator.toFixed(2)} ÷ ${denominator.toFixed(2)} = ${weightedAverage.toFixed(4)}
+            `;
+            
+            calculationElement.textContent = calculationText;
+
+            showSuccess('Média calculada com sucesso!');
+        }
+
+        function clearAll() {
+            // Remove todos os grupos exceto o primeiro
+            const inputGroups = document.querySelectorAll('.input-group');
+            for (let i = inputGroups.length - 1; i > 0; i--) {
+                inputGroups[i].remove();
+            }
+
+            // Limpa os valores do primeiro grupo
+            const firstGroup = document.querySelector('.input-group');
+            firstGroup.querySelectorAll('input').forEach(input => {
+                input.value = '';
+            });
+
+            // Reseta o display            document.getElementById('result').textContent = '0.00';
+            document.getElementById('calculation').textContent = 'Aguardando dados...';
+            
+            clearError();
+            inputCount = 0;
+
+            // Focus no primeiro input
+            firstGroup.querySelector('.value-input').focus();
+        }
+
+        function copyResult() {            const result = document.getElementById('result').textContent;
+            const calculation = document.getElementById('calculation').textContent;
+            const textToCopy = `Média Ponderada: ${result}\n\n${calculation}`;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showSuccess('Resultado copiado para área de transferência!');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(textToCopy);
+                });
+            } else {
+                fallbackCopyTextToClipboard(textToCopy);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showSuccess('Resultado copiado para área de transferência!');
+            } catch (err) {
+                showError('Erro ao copiar resultado. Copie manualmente.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.innerHTML = `<div class="error-message">${message}</div>`;
+            setTimeout(clearError, 5000);
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.innerHTML = `<div class="success-message">${message}</div>`;
+            setTimeout(clearError, 3000);
+        }
+
+        function clearError() {
+            document.getElementById('errorMessage').innerHTML = '';
+        }
+
+        // Event listeners para cálculo automático ao pressionar Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateWeightedAverage();
+            }
+        });
+
+        // Auto-focus no primeiro input quando a página carrega
+        window.addEventListener('load', function() {
+            document.querySelector('.value-input').focus();
+        });
+
+        // Validação em tempo real
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('weight-input')) {
+                const value = parseFloat(e.target.value);
+                if (value < 0) {
+                    e.target.style.borderColor = 'var(--error-color)';
+                    showError('O peso não pode ser negativo!');
+                } else {
+                    e.target.style.borderColor = 'var(--border-color)';
+                    clearError();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Porcentagem</title>
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --secondary-bg: #1e293b;
+            --accent-bg: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --border-color: #475569;
+            --display-bg: #020617;
+            --display-glow: #3b82f6;
+        }
+
+        [data-theme="light"] {
+            --primary-bg: #ffffff;
+            --secondary-bg: #f8fafc;
+            --accent-bg: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent-color: #3b82f6;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --border-color: #cbd5e1;
+            --display-bg: #0f172a;
+            --display-glow: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .calculator {
+            background: var(--secondary-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .shortcut-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: center;
+        }
+
+        .shortcut-btn {
+            background: var(--accent-bg);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .shortcut-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .calc-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--accent-bg);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .calc-section h2 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-field label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .input-field input {
+            background: var(--primary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .operator {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .result {
+            font-size: 1.5rem;
+            color: var(--success-color);
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--display-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border-color);
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background: var(--success-color);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 60px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-color);
+        }
+
+        .theme-toggle .toggle-ball {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        [data-theme="light"] .theme-toggle .toggle-ball {
+            transform: translateX(24px);
+        }
+
+        .input-with-symbol {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-with-symbol input {
+            padding-right: 2.5rem;
+            width: 100%;
+        }
+
+        .input-with-symbol span {
+            position: absolute;
+            right: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .proportion-group {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .proportion-group .remove-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 0.5rem;
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0;
+        }
+
+        .distribution-table {
+            width: 100%;
+            margin-top: 1rem;
+            border-collapse: collapse;
+        }
+
+        .distribution-table td {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .input-group {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .operator {
+                text-align: left;
+                margin: 0.5rem 0;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <div class="header">
+            <h1>Calculadora de Porcentagem</h1>
+            <p>Faça cálculos de porcentagem de forma rápida e simples</p>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <div class="toggle-ball"></div>
+            </div>
+        </div>
+
+        <div class="calculator">
+            <div class="shortcut-buttons">
+                <button class="shortcut-btn" onclick="addSymbol('%')">%</button>
+                <button class="shortcut-btn" onclick="addSymbol('+%')">+%</button>
+                <button class="shortcut-btn" onclick="addSymbol('-%')">-%</button>
+            </div>
+
+            <div class="calc-section">
+                <h2>Cálculos Básicos</h2>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Valor</label>
+                        <input type="number" step="0.01" placeholder="Ex: 150" id="baseValue">
+                    </div>
+                    <div class="input-field">
+                        <label>Porcentagem</label>
+                        <div class="input-with-symbol">
+                            <input type="number" step="0.01" placeholder="Ex: 20" id="percentValue">
+                            <span>%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn" onclick="calculateBasicPercentage()">% do valor</button>
+                    <button class="btn btn-success" onclick="calculateDiscount()">Desconto</button>
+                    <button class="btn btn-warning" onclick="calculateIncrease()">Aumento</button>
+                </div>
+                <div class="result" id="basicResult">0</div>
+            </div>
+
+            <div class="calc-section">
+                <h2>Porcentagem Reversa</h2>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Valor Final</label>
+                        <input type="number" step="0.01" placeholder="Ex: 180" id="finalValue">
+                    </div>
+                    <div class="input-field">
+                        <label>Porcentagem Aplicada</label>
+                        <div class="input-with-symbol">
+                            <input type="number" step="0.01" placeholder="Ex: 20" id="appliedPercentage">
+                            <span>%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn" onclick="calculateReversePercentage('increase')">De aumento</button>
+                    <button class="btn" onclick="calculateReversePercentage('discount')">De desconto</button>
+                </div>
+                <div class="result" id="reverseResult">0</div>
+            </div>
+
+            <div class="calc-section">
+                <h2>Diferença Percentual</h2>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Valor Inicial</label>
+                        <input type="number" step="0.01" placeholder="Ex: 120" id="initialValue">
+                    </div>
+                    <div class="input-field">
+                        <label>Valor Final</label>
+                        <input type="number" step="0.01" placeholder="Ex: 150" id="endValue">
+                    </div>
+                </div>
+                <button class="btn" onclick="calculatePercentageDifference()">Calcular Variação</button>
+                <div class="result" id="differenceResult">0%</div>
+            </div>
+
+            <div class="calc-section">
+                <h2>Distribuição Proporcional</h2>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Valor Total</label>
+                        <input type="number" step="0.01" placeholder="Ex: 1000" id="totalValue">
+                    </div>
+                </div>
+                <div id="proportionsContainer">
+                    <div class="proportion-group">
+                        <div class="input-field">
+                            <label>Proporção 1</label>
+                            <div class="input-with-symbol">
+                                <input type="number" step="0.01" placeholder="Ex: 20" class="proportionInput">
+                                <span>%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="addProportion()">+ Adicionar Proporção</button>
+                <button class="btn" onclick="calculateDistribution()">Calcular Distribuição</button>
+                <div class="result" id="distributionResult">
+                    <div class="distribution-table"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+        }
+
+        function calculatePercentage() {
+            const percentage = parseFloat(document.getElementById('percentageInput').value);
+            const baseNumber = parseFloat(document.getElementById('baseNumberInput').value);
+            
+            if (isNaN(percentage) || isNaN(baseNumber)) {
+                alert('Por favor, insira números válidos');
+                return;
+            }
+
+            const result = (percentage / 100) * baseNumber;
+            document.getElementById('percentageResult').textContent = 
+                `${percentage}% de ${baseNumber} = ${result.toFixed(2)}`;
+        }
+
+        function calculatePercentageOf() {
+            const number1 = parseFloat(document.getElementById('number1Input').value);
+            const number2 = parseFloat(document.getElementById('number2Input').value);
+            
+            if (isNaN(number1) || isNaN(number2)) {
+                alert('Por favor, insira números válidos');
+                return;
+            }
+
+            if (number2 === 0) {
+                alert('O segundo número não pode ser zero');
+                return;
+            }
+
+            const result = (number1 / number2) * 100;
+            document.getElementById('percentageOfResult').textContent = 
+                `${number1} é ${result.toFixed(2)}% de ${number2}`;
+        }
+
+        function addSymbol(symbol) {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.tagName === 'INPUT') {
+                activeElement.value = activeElement.value + symbol;
+            }
+        }
+
+        function calculateBasicPercentage() {
+            const base = parseFloat(document.getElementById('baseValue').value);
+            const percent = parseFloat(document.getElementById('percentValue').value);
+            
+            if (isNaN(base) || isNaN(percent)) {
+                alert('Por favor, preencha todos os campos com números válidos');
+                return;
+            }
+
+            const result = (base * percent) / 100;
+            document.getElementById('basicResult').textContent = 
+                `${percent}% de ${base} = ${result.toFixed(2)}`;
+        }
+
+        function calculateDiscount() {
+            const base = parseFloat(document.getElementById('baseValue').value);
+            const percent = parseFloat(document.getElementById('percentValue').value);
+            
+            if (isNaN(base) || isNaN(percent)) {
+                alert('Por favor, preencha todos os campos com números válidos');
+                return;
+            }
+
+            const discount = (base * percent) / 100;
+            const result = base - discount;
+            document.getElementById('basicResult').textContent = 
+                `${base} - ${percent}% = ${result.toFixed(2)} (desconto: ${discount.toFixed(2)})`;
+        }
+
+        function calculateIncrease() {
+            const base = parseFloat(document.getElementById('baseValue').value);
+            const percent = parseFloat(document.getElementById('percentValue').value);
+            
+            if (isNaN(base) || isNaN(percent)) {
+                alert('Por favor, preencha todos os campos com números válidos');
+                return;
+            }
+
+            const increase = (base * percent) / 100;
+            const result = base + increase;
+            document.getElementById('basicResult').textContent = 
+                `${base} + ${percent}% = ${result.toFixed(2)} (aumento: ${increase.toFixed(2)})`;
+        }
+
+        function calculateReversePercentage(type) {
+            const final = parseFloat(document.getElementById('finalValue').value);
+            const percent = parseFloat(document.getElementById('appliedPercentage').value);
+            
+            if (isNaN(final) || isNaN(percent)) {
+                alert('Por favor, preencha todos os campos com números válidos');
+                return;
+            }
+
+            let original;
+            if (type === 'increase') {
+                original = final / (1 + (percent / 100));
+            } else {
+                original = final / (1 - (percent / 100));
+            }
+
+            document.getElementById('reverseResult').textContent = 
+                `Valor original: ${original.toFixed(2)}`;
+        }
+
+        function calculatePercentageDifference() {
+            const initial = parseFloat(document.getElementById('initialValue').value);
+            const final = parseFloat(document.getElementById('endValue').value);
+            
+            if (isNaN(initial) || isNaN(final)) {
+                alert('Por favor, preencha todos os campos com números válidos');
+                return;
+            }
+
+            if (initial === 0) {
+                alert('O valor inicial não pode ser zero');
+                return;
+            }
+
+            const difference = ((final - initial) / initial) * 100;
+            document.getElementById('differenceResult').textContent = 
+                `Variação: ${difference > 0 ? '+' : ''}${difference.toFixed(2)}%`;
+        }
+
+        function addProportion() {
+            const container = document.getElementById('proportionsContainer');
+            const proportionCount = container.children.length + 1;
+            
+            const newProportion = document.createElement('div');
+            newProportion.className = 'proportion-group';
+            newProportion.innerHTML = `
+                <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+                <div class="input-field">
+                    <label>Proporção ${proportionCount}</label>
+                    <div class="input-with-symbol">
+                        <input type="number" step="0.01" placeholder="Ex: 20" class="proportionInput">
+                        <span>%</span>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(newProportion);
+        }
+
+        function calculateDistribution() {
+            const total = parseFloat(document.getElementById('totalValue').value);
+            const proportions = Array.from(document.getElementsByClassName('proportionInput'))
+                                   .map(input => parseFloat(input.value))
+                                   .filter(value => !isNaN(value));
+            
+            if (isNaN(total) || proportions.length === 0) {
+                alert('Por favor, preencha todos os campos com números válidos');
+                return;
+            }
+
+            const sum = proportions.reduce((a, b) => a + b, 0);
+            if (sum !== 100) {
+                alert('A soma das proporções deve ser 100%');
+                return;
+            }
+
+            const values = proportions.map(p => (total * p) / 100);
+            
+            const table = document.createElement('table');
+            table.className = 'distribution-table';
+            table.innerHTML = `
+                ${values.map((value, i) => `
+                    <tr>
+                        <td>Parte ${i + 1} (${proportions[i]}%)</td>
+                        <td>${value.toFixed(2)}</td>
+                    </tr>
+                `).join('')}
+            `;
+
+            const resultDiv = document.getElementById('distributionResult');
+            resultDiv.innerHTML = '';
+            resultDiv.appendChild(table);
+        }
+
+        // Event listeners para cálculo automático ao pressionar Enter
+        document.getElementById('percentageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calculatePercentage();
+        });
+        document.getElementById('baseNumberInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calculatePercentage();
+        });
+        document.getElementById('number1Input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calculatePercentageOf();
+        });
+        document.getElementById('number2Input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calculatePercentageOf();
+        });
+
+        // Adicionar uma proporção inicial
+        window.addEventListener('load', function() {
+            if (document.getElementById('proportionsContainer').children.length === 0) {
+                addProportion();
+            }
+        });
+    </script>
+</body>
+</html>
