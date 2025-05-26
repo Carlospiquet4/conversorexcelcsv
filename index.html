@@ -993,43 +993,57 @@
                 const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
                 saveAs(blob, 'moodle_import.csv');
                 Utils.showNotification('Arquivo para importação no Moodle baixado com sucesso!');
-            }        handleDownloadFullClick() {
-            if (!this.fullData || this.fullData.length < 2) {
-                Utils.showNotification('Não há dados completos para baixar.', 'error');
-                return;
-            }
+            }            handleDownloadFullClick() {
+                if (!this.workbookData || this.workbookData.length < 2) {
+                    Utils.showNotification('Não há dados completos para baixar.', 'error');
+                    return;
+                }
 
-            // Obter os dados atuais
-            const headers = this.fullData[0];
-            const rows = this.fullData.slice(1);
+                // Obter os dados atuais
+                const headers = this.workbookData[0];
+                const rows = this.workbookData.slice(1);
 
-            // Mapear índices das colunas necessárias
-            const matriculaIndex = headers.indexOf('matricula_esap');
-            const nomeIndex = headers.indexOf('nome_completo');
-            const turmaIndex = headers.indexOf('turma');
-            const emailIndex = headers.indexOf('email');
-            const cpfIndex = headers.indexOf('cpf');
-            const sexoIndex = headers.indexOf('sexo');
-            const celularIndex = headers.indexOf('celular');
-            const enderecoIndex = headers.indexOf('endereco');
-            const bairroIndex = headers.indexOf('bairro');
-            const cidadeIndex = headers.indexOf('cidade');
-            const ufIndex = headers.indexOf('uf');
+                // Mapear índices das colunas necessárias
+                const matriculaIndex = headers.indexOf('matricula_esap');
+                const nomeIndex = headers.indexOf('nome_completo');
+                const turmaIndex = headers.indexOf('turma');
+                const emailIndex = headers.indexOf('email');
+                const cpfIndex = headers.indexOf('cpf');
+                const sexoIndex = headers.indexOf('sexo');
+                const celularIndex = headers.indexOf('celular');
+                const enderecoIndex = headers.indexOf('endereco');
+                const bairroIndex = headers.indexOf('bairro');
+                const cidadeIndex = headers.indexOf('cidade');
+                const ufIndex = headers.indexOf('uf');                // Criar mapeamento de campos antigos para novos
+                const fieldMapping = {
+                    'matricula_esap': 'username',
+                    'nome_completo': ['firstname', 'lastname'],
+                    'turma': 'cohort1',
+                    'email': 'email',
+                    'cpf': 'idnumber',
+                    'sexo': 'gender',
+                    'celular': 'phone1',
+                    'endereco': 'address',
+                    'cidade': 'city',
+                    'uf': 'country'
+                };
 
-            // Definir os novos cabeçalhos na ordem especificada
-            const newHeaders = [
-                'username',
-                'firstname',
-                'lastname',
-                'cohort1',
-                'email',
-                'idnumber',
-                'gender',
-                'phone1',
-                'address',
-                'city',
-                'country'
-            ];
+                // Obter campos selecionados
+                const selectedFields = Array.from(document.querySelectorAll('#fieldSelection .field-options input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+
+                // Criar cabeçalhos apenas para campos selecionados
+                const newHeaders = ['username', 'firstname', 'lastname', 'cohort1']; // Campos obrigatórios
+                
+                // Adicionar outros campos selecionados
+                selectedFields.forEach(field => {
+                    if (field !== 'nome_completo' && field !== 'matricula_esap' && field !== 'turma') {
+                        const moodleField = fieldMapping[field];
+                        if (moodleField && !newHeaders.includes(moodleField)) {
+                            newHeaders.push(moodleField);
+                        }
+                    }
+                });
 
             // Função para converter UF para nome do estado
             const convertUfToState = (uf) => {
@@ -1065,7 +1079,7 @@
                 return states[uf.toUpperCase()] || uf;
             };
 
-            const newRows = rows.map(row => {
+            const newRows = rows.map(row => {                if (!row[nomeIndex]) return null;  // Pula linhas sem nome
                 const nomeCompleto = String(row[nomeIndex]).trim();
                 const nomeParts = nomeCompleto.split(' ');
                 const firstName = nomeParts[0];
@@ -1075,25 +1089,47 @@
                 const enderecoCompleto = endereco && bairro ? `${endereco}, ${bairro}` : endereco || bairro;
                 const sexo = row[sexoIndex] ? (row[sexoIndex].trim().toUpperCase() === 'F' ? 'Feminino' : 
                                              row[sexoIndex].trim().toUpperCase() === 'M' ? 'Masculino' : 
-                                             row[sexoIndex]) : '';                return [
+                                             row[sexoIndex]) : '';                // Construir array apenas com campos selecionados
+                const rowData = [
                     row[matriculaIndex]?.trim() || '',                    // username
                     firstName,                                            // firstname
                     lastName,                                             // lastname
-                    `turma_${(row[turmaIndex] || '').toLowerCase()}`,    // cohort1
-                    row[emailIndex] || '',                               // email
-                    row[cpfIndex] || '',                                 // idnumber
-                    sexo,                                                // gender
-                    row[celularIndex] || '',                             // phone1
-                    enderecoCompleto,                                    // address
-                    row[cidadeIndex] || '',                             // city
-                    row[ufIndex]?.toUpperCase() || ''                   // country (UF format)
+                    `turma_${(row[turmaIndex] || '').toLowerCase()}`     // cohort1
                 ];
-            });
 
-        const fullDataWithMoodle = [newHeaders, ...newRows];
-        const BOM = "\uFEFF";
-        const csvContent = Utils.convertToCSV(fullDataWithMoodle);
-        const csvContentWithBOM = BOM + csvContent;
+                // Adicionar outros campos selecionados na mesma ordem dos cabeçalhos
+                newHeaders.slice(4).forEach(header => {
+                    switch(header) {
+                        case 'email':
+                            rowData.push(row[emailIndex] || '');
+                            break;
+                        case 'idnumber':
+                            rowData.push(row[cpfIndex] || '');
+                            break;
+                        case 'gender':
+                            rowData.push(sexo || '');
+                            break;
+                        case 'phone1':
+                            rowData.push(row[celularIndex] || '');
+                            break;
+                        case 'address':
+                            rowData.push(enderecoCompleto || '');
+                            break;
+                        case 'city':
+                            rowData.push(row[cidadeIndex] || '');
+                            break;
+                        case 'country':
+                            rowData.push(row[ufIndex]?.toUpperCase() || '');
+                            break;
+                    }
+                });
+
+                return rowData;
+            });                const validRows = newRows.filter(row => row !== null);
+                const fullDataWithMoodle = [newHeaders, ...validRows];
+                const BOM = "\uFEFF";
+                const csvContent = Utils.convertToCSV(fullDataWithMoodle);
+                const csvContentWithBOM = BOM + csvContent;
                 
                 const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
                 saveAs(blob, 'dados_completos.csv');
