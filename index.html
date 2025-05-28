@@ -36,8 +36,8 @@
         }
 
         .main-content {
-            max-width: 1000px;
-            width: 90%;
+            max-width: 95%; /* Aumentar largura máxima do conteúdo */
+            width: 95%;
             margin: 0 auto;
             padding: 2.5rem;
             background-color: var(--surface);
@@ -207,60 +207,70 @@
 
         input[type="file"]:hover {
             border-color: var(--primary);
-        }
-
-        .excel-view {
+        }        .excel-view {
             border: 1px solid var(--border);
             border-radius: 0.375rem;
-            overflow: auto;
-            max-height: 400px;
+            overflow-x: auto;
+            max-height: 600px;
             position: relative;
             background: var(--surface);
             color: var(--text);
+            width: 100%;
+        }        .excel-view table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: auto;
+            margin: 0;
+            padding: 0;
         }
 
-        .excel-view table {
-            width: 100%;
-            border-collapse: collapse;
+        .excel-view th, .excel-view td {
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+            min-width: 100px;
+            max-width: none;
+            white-space: nowrap;
+            overflow: visible;
+        }
+
+        .excel-view td[data-field="cep"] {
+            min-width: 100px;
+            font-family: monospace;
         }
 
         .excel-view th {
-            background-color: var(--surface);
-            color: var(--text);
+            background-color: var(--primary);
+            color: white;
             font-weight: 600;
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
 
-        .excel-view td {
-            padding: 0.75rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-            background-color: var(--surface);
-        }
-
-        tr:nth-child(even) td {
+        .excel-view tr:nth-child(even) {
             background-color: var(--background);
         }
 
-        tr:hover td {
-            background-color: var(--primary);
-            color: white;
+        .excel-view tr:hover {
+            background-color: rgba(79, 70, 229, 0.1);
         }
 
+        /* Personalização da barra de rolagem */
         .excel-view::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
         }
 
         .excel-view::-webkit-scrollbar-track {
-            background: var(--border);
+            background: var(--background);
+            border-radius: 6px;
         }
 
         .excel-view::-webkit-scrollbar-thumb {
             background: var(--primary);
-            border-radius: 4px;
+            border-radius: 6px;
+            border: 3px solid var(--background);
         }
 
         .excel-view::-webkit-scrollbar-thumb:hover {
@@ -663,29 +673,53 @@
                     notification.style.opacity = '0';
                     setTimeout(() => notification.remove(), 300);
                 }, 5000);
-            }
+            }  // Added missing closing brace for showNotification method
 
             static formatarData(data) {
                 if (!data) return '';
                 
-                let dataLimpa = String(data).replace(/[^\d\/]/g, '');
-                let partes = dataLimpa.split('/');
-                
-                if (partes.length !== 3) return data;
-
-                let dia = partes[0].padStart(2, '0');
-                let mes = partes[1].padStart(2, '0');
-                let ano = partes[2];
-
-                if (ano.length === 2) {
-                    ano = parseInt(ano);
-                    ano = ano > 50 ? '19' + String(ano).padStart(2, '0') : '20' + String(ano).padStart(2, '0');
+                // Se for uma data do Excel (número)
+                if (typeof data === 'number') {
+                    const date = new Date((data - 25569) * 86400 * 1000);
+                    const ano = date.getFullYear();
+                    const mes = String(date.getMonth() + 1).padStart(2, '0');
+                    const dia = String(date.getDate()).padStart(2, '0');
+                    return `${ano}/${mes}/${dia}`;
                 }
                 
-                ano = String(ano).padStart(4, '20');
+                // Remove caracteres não numéricos
+                const numeros = data.replace(/\D/g, '');
                 
-                return `${dia}/${mes}/${ano}`;
-            }            static convertToCSV(data) {
+                // Verifica se temos uma data válida com 8 dígitos
+                if (numeros.length === 8) {
+                    // Verifica se está no formato DDMMYYYY
+                    if (data.includes('/') || data.includes('-')) {
+                        const dia = numeros.substr(0, 2);
+                        const mes = numeros.substr(2, 2);
+                        const ano = numeros.substr(4, 4);
+                        return `${ano}/${mes}/${dia}`;
+                    } else {
+                        // Assume YYYYMMDD se não houver separadores
+                        const ano = numeros.substr(0, 4);
+                        const mes = numeros.substr(4, 2);
+                        const dia = numeros.substr(6, 2);
+                        return `${ano}/${mes}/${dia}`;
+                    }
+                }
+                
+                // Tenta parsear datas em outros formatos comuns
+                const dataObj = new Date(data);
+                if (!isNaN(dataObj.getTime())) {
+                    const ano = dataObj.getFullYear();
+                    const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+                    const dia = String(dataObj.getDate()).padStart(2, '0');
+                    return `${ano}/${mes}/${dia}`;
+                }
+                
+                // Se não conseguir formatar, retorna vazio
+                return '';
+            }
+            static convertToCSV(data) {
                 return data.map(row => {
                     return row.map(cell => {
                         const value = String(cell || '').trim();
@@ -697,9 +731,13 @@
                     }).join(';');
                 }).join('\n');
             }
-
             static createTable(data, container) {
                 if (!data || data.length === 0) return;
+
+                // Filtrar colunas vazias
+                const validColumns = data[0].map((_, colIndex) => {
+                    return data.some(row => row[colIndex] && row[colIndex].toString().trim() !== '');
+                });
 
                 const table = document.createElement('table');
                 table.setAttribute('role', 'table');
@@ -707,31 +745,37 @@
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
                 
-                data[0].forEach(header => {
-                    const th = document.createElement('th');
-                    th.textContent = header;
-                    th.setAttribute('scope', 'col');
-                    headerRow.appendChild(th);
+                data[0].forEach((header, index) => {
+                    if (validColumns[index] && header && header.trim() !== '') {
+                        const th = document.createElement('th');
+                        th.textContent = header;
+                        th.setAttribute('scope', 'col');
+                        headerRow.appendChild(th);
+                    }
                 });
                 
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
-                
-                const tbody = document.createElement('tbody');
+                  const tbody = document.createElement('tbody');
                 
                 for (let i = 1; i < data.length; i++) {
                     const row = document.createElement('tr');
                     
                     data[i].forEach((cell, index) => {
-                        const td = document.createElement('td');
-                        td.textContent = cell;
-                        if (index === 0) {
-                            td.setAttribute('scope', 'row');
+                        if (validColumns[index] && data[0][index] && data[0][index].trim() !== '') {
+                            const td = document.createElement('td');
+                            td.textContent = cell || '';
+                            if (index === 0) {
+                                td.setAttribute('scope', 'row');
+                            }
+                            row.appendChild(td);
                         }
-                        row.appendChild(td);
                     });
                     
-                    tbody.appendChild(row);
+                    // Só adiciona a linha se ela tiver algum conteúdo
+                    if (row.children.length > 0) {
+                        tbody.appendChild(row);
+                    }
                 }
                 
                 table.appendChild(tbody);
@@ -797,109 +841,111 @@
                 Utils.createTable(this.workbookData, document.getElementById('tableContainer'));
                 
                 return true;
+            }            processRawData(rawData) {
+                // Primeiro, vamos pegar os campos selecionados e filtrar campos vazios
+                const selectedFields = Array.from(document.querySelectorAll('#fieldSelection .field-options input[type="checkbox"]:checked'))
+                    .map(cb => cb.value)
+                    .filter(value => value && value.trim() !== '');
+
+                // Preservar os cabeçalhos originais e criar um mapeamento para minúsculas
+                const originalHeaders = rawData[0].map(h => h ? h.trim() : '').filter(h => h !== '');
+                const headerMap = originalHeaders.map((h, index) => ({
+                    original: h,
+                    lower: String(h).toLowerCase().trim(),
+                    index: index
+                }));
+
+                // Mapeamento de campos com seus possíveis nomes
+                const fieldMappings = {
+                    'nome_completo': ['nome completo', 'nome_completo', 'nome'],
+                    'turma': ['turma', 'classe'],
+                    'matricula_esap': ['matricula esap', 'matrícula esap', 'matricula_esap', 'matricula'],
+                    'email': ['email', 'e-mail'],
+                    'cpf': ['cpf'],
+                    'sexo': ['sexo'],
+                    'nomepai': ['nome do pai', 'pai', 'nomepai'],
+                    'nomemae': ['nome da mae', 'mae', 'nomemae'],
+                    'dtnasc': ['data nascimento', 'data de nascimento', 'dtnasc'],
+                    'celular': ['celular', 'telefone celular'],
+                    'docidentif': ['documento identificacao', 'doc identificacao', 'docidentif'],
+                    'orgexpident': ['orgao expedidor', 'org expedidor', 'orgexpident'],
+                    'dataexpedicao': ['data expedicao', 'data de expedicao', 'dataexpedicao'],
+                    'endereco': ['endereco', 'endereço'],
+                    'bairro': ['bairro'],
+                    'cidade': ['cidade'],
+                    'uf': ['uf', 'estado'],
+                    'cep': ['cep']
+                };
+
+            // Função para remover acentos de uma string
+            function removeAccents(str) {
+                return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             }
 
-            processRawData(rawData) {
-                const headers = rawData[0].map(h => String(h).toLowerCase().trim());
-                const requiredColumns = ['nome completo', 'turma', 'matrícula esap'];
-                
-                // Validar colunas obrigatórias
-                const missingColumns = requiredColumns.filter(col => 
-                    !headers.some(h => h.includes(col))
+            // Função auxiliar para encontrar o índice da coluna
+            function findColumnIndex(fieldName) {
+                const possibleNames = fieldMappings[fieldName] || [fieldName];
+                const headerInfo = headerMap.find(h => 
+                    possibleNames.some(name => removeAccents(h.lower).includes(removeAccents(name)))
                 );
+                return headerInfo ? headerInfo.index : -1;
+            }
 
-                if (missingColumns.length > 0) {
-                    throw new Error(`Colunas obrigatórias faltando: ${missingColumns.join(', ')}`);
-                }
-
-                // Obter campos selecionados
-                const selectedFields = Array.from(document.querySelectorAll('#fieldSelection .field-options input[type="checkbox"]'))
-                    .filter(cb => cb.checked)
-                    .map(cb => cb.value);
-
-                // Mapear índices das colunas selecionadas
-                const selectedIndices = selectedFields.map(field => {
-                    let index = -1;
-                    switch(field) {
-                        case 'nome_completo':
-                            index = headers.findIndex(h => h.includes('nome completo'));
-                            break;
-                        case 'turma':
-                            index = headers.findIndex(h => h.includes('turma'));
-                            break;
-                        case 'matricula_esap':
-                            index = headers.findIndex(h => h.includes('matrícula esap') || h.includes('matricula esap'));
-                            break;
-                        case 'email':
-                            index = headers.findIndex(h => h.includes('email'));
-                            break;
-                        case 'cpf':
-                            index = headers.findIndex(h => h.includes('cpf'));
-                            break;
-                        case 'sexo':
-                            index = headers.findIndex(h => h.includes('sexo'));
-                            break;
-                        case 'nomepai':
-                            index = headers.findIndex(h => h.includes('nomepai') || h.includes('nome do pai') || h.includes('nome pai'));
-                            break;
-                        case 'nomemae':
-                            index = headers.findIndex(h => h.includes('nomemae') || h.includes('nome da mae') || h.includes('nome mae'));
-                            break;
-                        case 'dtnasc':
-                            index = headers.findIndex(h => h.includes('dtnasc') || h.includes('data de nascimento') || h.includes('data nasc'));
-                            break;
-                        case 'celular':
-                            index = headers.findIndex(h => h.includes('celular'));
-                            break;
-                        case 'docidentif':
-                            index = headers.findIndex(h => h.includes('docidentif') || h.includes('documento de identificacao'));
-                            break;
-                        case 'orgexpident':
-                            index = headers.findIndex(h => h.includes('orgexpident') || h.includes('orgao expedidor'));
-                            break;
-                        case 'dataexpedicao':
-                            index = headers.findIndex(h => h.includes('dataexpedicao') || h.includes('data de expedicao'));
-                            break;
-                        case 'endereco':
-                            index = headers.findIndex(h => h.includes('endereco'));
-                            break;
-                        case 'bairro':
-                            index = headers.findIndex(h => h.includes('bairro'));
-                            break;
-                        case 'cidade':
-                            index = headers.findIndex(h => h.includes('cidade'));
-                            break;
-                        case 'uf':
-                            index = headers.findIndex(h => h.includes('uf'));
-                            break;
-                        case 'cep':
-                            index = headers.findIndex(h => h.includes('cep'));
-                            break;
-                    }
-                    return { field, index };
-                }).filter(item => item.index !== -1);
-
-                // Criar novo conjunto de dados apenas com as colunas selecionadas
-                return rawData.map((row, rowIndex) => {
+                // Processar cada linha
+                const processedData = rawData.map((row, rowIndex) => {
                     if (rowIndex === 0) {
-                        // Retornar apenas os cabeçalhos selecionados na ordem correta
-                        return selectedFields;
+                        // Retornar cabeçalhos originais selecionados
+                        const selectedHeaderIndices = selectedFields.map(field => findColumnIndex(field));
+                        return selectedHeaderIndices.map(index => originalHeaders[index]);
                     }
-                    
-                    // Para cada linha de dados, retornar apenas as colunas selecionadas
-                    return selectedIndices.map(({ index }) => {
-                        const value = row[index] || '';
-                        const header = headers[index];
 
-                        // Aplicar formatação específica baseada no tipo de coluna
-                        if (header.includes('data')) {
-                            return Utils.formatarData(value);
-                        } else if (header.includes('sexo')) {
-                            return this.formatSexo(value);
+                    return selectedFields.map(field => {
+                        const columnIndex = findColumnIndex(field);
+                        if (columnIndex === -1) return '';
+
+                        let value = row[columnIndex];
+                        if (value === undefined || value === null) return '';
+                        value = String(value).trim();                        switch (field) {
+                            case 'dtnasc':
+                            case 'dataexpedicao':
+                                if (!value) return '';
+                                const formatedDate = Utils.formatarData(value);
+                                return formatedDate || value; // Retorna o valor original se não conseguir formatar
+                            
+                            case 'sexo':
+                                if (!value) return '';
+                                value = value.toUpperCase();
+                                return value === 'F' ? 'Feminino' : 
+                                       value === 'M' ? 'Masculino' : value;
+                            
+                            case 'cep':
+                                if (!value) return '';
+                                // Remover todos os caracteres não numéricos
+                                const cepLimpo = value.replace(/\D/g, '');
+                                if (cepLimpo.length === 8) {
+                                    return cepLimpo.replace(/(\d{5})(\d{3})/, '$1-$2');
+                                }
+                                return value;
+                            
+                            case 'uf':
+                                return value.toUpperCase();
+                            
+                            case 'celular':
+                                if (!value) return '';
+                                // Manter apenas números e formatar
+                                const numeros = value.replace(/\D/g, '');
+                                if (numeros.length === 11) {
+                                    return `(${numeros.substr(0,2)}) ${numeros.substr(2,5)}-${numeros.substr(7)}`;
+                                }
+                                return value;
+                            
+                            default:
+                                return value;
                         }
-                        return value;
                     });
                 });
+
+                return processedData;
             }
 
             formatSexo(value) {
@@ -907,60 +953,152 @@
                 return sexoValue === 'M' ? 'Masculino' : 
                        sexoValue === 'F' ? 'Feminino' : value;
             }
-
             transformData() {
                 if (!this.workbookData || this.workbookData.length < 2) {
                     throw new Error('Não há dados para transformar.');
                 }
 
                 // Encontrar índices das colunas necessárias
-                const headers = this.workbookData[0];
-                const matriculaIndex = headers.indexOf('matricula_esap');
-                const nomeIndex = headers.indexOf('nome_completo');
-                const turmaIndex = headers.indexOf('turma');
+                const headers = this.workbookData[0].map(h => h ? String(h).toLowerCase().trim() : '');
 
-                if (matriculaIndex === -1 || nomeIndex === -1 || turmaIndex === -1) {
-                    throw new Error('Colunas obrigatórias não encontradas.');
+                // Mapeamento de campos com seus possíveis nomes para docidentif e dataexpedicao
+                const fieldMappings = {
+                    'docidentif': ['documento identificacao', 'doc identificacao', 'docidentif'],
+                    'dataexpedicao': ['data expedicao', 'data de expedicao', 'dataexpedicao']
+                };
+
+                // Função auxiliar para encontrar o índice da coluna
+                function findColumnIndex(fieldName) {
+                    const possibleNames = fieldMappings[fieldName] || [fieldName];
+                    const headerInfo = headers.findIndex(h =>
+                        possibleNames.some(name => h.includes(name))
+                    );
+                    return headerInfo;
                 }
 
-                // Preparar dados do Moodle
-                const moodleHeaders = ['username', 'firstname', 'lastname', 'cohort1'];
-                const moodleRows = [moodleHeaders];
+                // Mapear índices das colunas relevantes
+                const indices = {
+                    matricula_esap: headers.findIndex(h => h.includes('matricula') || h.includes('matrícula')),
+                    nome_completo: headers.findIndex(h => h.includes('nome completo') || h.includes('nome_completo') || h === 'nome'),
+                    turma: headers.findIndex(h => h.includes('turma') || h.includes('classe')),
+                    email: headers.findIndex(h => h.includes('email') || h.includes('e-mail')),
+                    cpf: headers.findIndex(h => h.includes('cpf')),
+                    sexo: headers.findIndex(h => h.includes('sexo')),
+                    nomepai: headers.findIndex(h => h.includes('nome do pai') || h.includes('pai') || h.includes('nomepai')),
+                    nomemae: headers.findIndex(h => h.includes('nome da mae') || h.includes('mae') || h.includes('nomemae')),
+                    dtnasc: headers.findIndex(h => h.includes('data nascimento') || h.includes('data de nascimento') || h.includes('dtnasc')),
+                    celular: headers.findIndex(h => h.includes('celular') || h.includes('telefone celular')),
+                    docidentif: findColumnIndex('docidentif'),
+                    orgexpident: headers.findIndex(h => h.includes('orgao expedidor') || h.includes('org expedidor') || h.includes('orgexpident')),
+                    dataexpedicao: findColumnIndex('dataexpedicao'),
+                    endereco: headers.findIndex(h => h.includes('endereco') || h.includes('endereço')),
+                    bairro: headers.findIndex(h => h.includes('bairro')),
+                    cidade: headers.findIndex(h => h.includes('cidade')),
+                    uf: headers.findIndex(h => h.includes('uf') || h.includes('estado')),
+                    cep: headers.findIndex(h => h.includes('cep'))
+                };
 
-                // Preparar dados completos
-                this.fullData = this.workbookData;
+
+                // Verificar colunas obrigatórias
+                if (indices.matricula_esap === -1 || indices.nome_completo === -1 || indices.turma === -1) {
+                    throw new Error('Colunas obrigatórias não encontradas. Verifique se existem as colunas: Matrícula ESAP, Nome Completo e Turma.');
+                }
+
+                // Definir cabeçalho CSV conforme solicitado
+                const csvHeaders = [
+                    'username',
+                    'firstname',
+                    'lastname',
+                    'cohort1',
+                    'email',
+                    'profile_field_CPF',
+                    'profile_field_genero',
+                    'profile_field_Pai',
+                    'profile_field_Mae',
+                    'profile_field_Data',
+                    'profile_field_Telefone',
+                    'profile_field_RegistroCivil',
+                    'profile_field_OrgaoEmissor',
+                    'profile_field_DataExpedicao',
+                    'profile_field_EnderecoResidencial',
+                    'profile_field_Bairro',
+                    'city',
+                    'profile_field_Estado',
+                    'profile_field_CEP'
+                ];
+
+                const csvRows = [csvHeaders];
 
                 // Processar cada linha
                 for (let i = 1; i < this.workbookData.length; i++) {
                     const row = this.workbookData[i];
-                    if (!row[matriculaIndex] || !row[nomeIndex] || !row[turmaIndex]) {
-                        console.warn(`Linha ${i} ignorada por dados incompletos`);
+
+                    // Validar dados obrigatórios
+                    const matricula = row[indices.matricula_esap]?.toString().trim();
+                    const nomeCompleto = row[indices.nome_completo]?.toString().trim();
+                    const turma = row[indices.turma]?.toString().trim();
+
+                    if (!matricula || !nomeCompleto || !turma) {
                         continue;
                     }
 
-                    // Processar nome completo
-                    const nomeCompleto = String(row[nomeIndex]).trim();
+                    // Separar nome completo em firstname e lastname
                     const nomeParts = nomeCompleto.split(' ');
                     const firstName = nomeParts[0];
                     const lastName = nomeParts.length > 1 ? nomeParts.slice(1).join(' ') : '';
 
-                    // Criar linha para Moodle
-                    const moodleRow = [
-                        row[matriculaIndex].trim(), // username
-                        firstName,                   // firstname
-                        lastName,                    // lastname
-                        `turma_${row[turmaIndex].toLowerCase()}` // cohort1
+                    // Formatar datas
+                    const dataNascimentoRaw = row[indices.dtnasc];
+                    const dataNascimento = Utils.formatarData(dataNascimentoRaw);
+
+                    const dataExpedicaoRaw = row[indices.dataexpedicao];
+                    const dataExpedicao = Utils.formatarData(dataExpedicaoRaw);
+
+                    // Formatar sexo
+                    let sexo = row[indices.sexo]?.toString().trim() || '';
+                    sexo = sexo.toUpperCase() === 'F' ? 'Feminino' : sexo.toUpperCase() === 'M' ? 'Masculino' : sexo;
+
+                    // Formatar celular
+                    let celular = row[indices.celular]?.toString().trim() || '';
+                    const numerosCelular = celular.replace(/\D/g, '');
+                    if (numerosCelular.length === 11) {
+                        celular = `(${numerosCelular.substr(0,2)}) ${numerosCelular.substr(2,5)}-${numerosCelular.substr(7)}`;
+                    }
+
+                    // Montar linha CSV conforme cabeçalho
+                    const csvRow = [
+                        matricula,                  // username
+                        firstName,                  // firstname
+                        lastName,                   // lastname
+                        turma,                     // cohort1
+                        row[indices.email] || '',   // email
+                        row[indices.cpf] || '',     // profile_field_CPF
+                        sexo,                      // profile_field_genero
+                        row[indices.nomepai] || '', // profile_field_Pai
+                        row[indices.nomemae] || '', // profile_field_Mae
+                        dataNascimento || '',       // profile_field_Data
+                        celular,                   // profile_field_Telefone
+                        indices.docidentif !== -1 ? (row[indices.docidentif] || '') : '', // profile_field_RegistroCivil
+                        row[indices.orgexpident] || '', // profile_field_OrgaoEmissor
+                        indices.dataexpedicao !== -1 ? (dataExpedicao || '') : '',       // profile_field_DataExpedicao
+                        row[indices.endereco] || '', // profile_field_EnderecoResidencial
+                        row[indices.bairro] || '',  // profile_field_Bairro
+                        row[indices.cidade] || '',  // city
+                        row[indices.uf] || '',      // profile_field_Estado
+                        row[indices.cep] || ''      // profile_field_CEP
                     ];
 
-                    moodleRows.push(moodleRow);
-                }                // Atualizar conteúdo transformado (Moodle)
-                this.transformedContent = Utils.convertToCSV(moodleRows);
-                Utils.createTable(moodleRows, document.getElementById('transformedTableContainer'));
+                    csvRows.push(csvRow);
+                }
+
+                // Atualizar conteúdo transformado (CSV)
+                this.transformedContent = Utils.convertToCSV(csvRows);
+                Utils.createTable(csvRows, document.getElementById('transformedTableContainer'));
 
                 // Mostrar o container transformado
                 document.getElementById('originalDataContainer').classList.add('hide');
                 document.getElementById('transformedDataContainer').classList.remove('hide');
-                
+
                 return true;
             }
 
@@ -999,51 +1137,49 @@
                     return;
                 }
 
-                // Obter os dados atuais
-                const headers = this.workbookData[0];
-                const rows = this.workbookData.slice(1);
+                try {
+                    const headers = this.workbookData[0].map(h => String(h).toLowerCase().trim());
+                    console.log('Headers para download:', headers); // Para debug
 
-                // Mapear índices das colunas necessárias
-                const matriculaIndex = headers.indexOf('matricula_esap');
-                const nomeIndex = headers.indexOf('nome_completo');
-                const turmaIndex = headers.indexOf('turma');
-                const emailIndex = headers.indexOf('email');
-                const cpfIndex = headers.indexOf('cpf');
-                const sexoIndex = headers.indexOf('sexo');
-                const celularIndex = headers.indexOf('celular');
-                const enderecoIndex = headers.indexOf('endereco');
-                const bairroIndex = headers.indexOf('bairro');
-                const cidadeIndex = headers.indexOf('cidade');
-                const ufIndex = headers.indexOf('uf');                // Criar mapeamento de campos antigos para novos
-                const fieldMapping = {
+                    // Mapear índices das colunas necessárias
+                    const matriculaIndex = headers.findIndex(h => h.includes('matricula_esap'));
+                    const nomeIndex = headers.findIndex(h => h.includes('nome_completo'));
+                    const turmaIndex = headers.findIndex(h => h.includes('turma'));
+                    const emailIndex = headers.findIndex(h => h.includes('email'));
+                    const cpfIndex = headers.findIndex(h => h.includes('cpf'));
+                    const sexoIndex = headers.findIndex(h => h.includes('sexo'));
+                    const celularIndex = headers.findIndex(h => h.includes('celular'));
+                    const enderecoIndex = headers.findIndex(h => h.includes('endereco'));
+                    const bairroIndex = headers.findIndex(h => h.includes('bairro'));
+                    const cidadeIndex = headers.findIndex(h => h.includes('cidade'));
+                    const ufIndex = headers.findIndex(h => h.includes('uf'));
+                    const cepIndex = headers.findIndex(h => h.includes('cep'));const fieldMapping = {
                     'matricula_esap': 'username',
                     'nome_completo': ['firstname', 'lastname'],
                     'turma': 'cohort1',
                     'email': 'email',
-                    'cpf': 'idnumber',
-                    'sexo': 'gender',
-                    'celular': 'phone1',
-                    'endereco': 'address',
+                    'cpf': 'profile_field_CPF',
+                    'sexo': 'profile_field_genero',
+                    'nomepai': 'profile_field_Pai',
+                    'nomemae': 'profile_field_Mae',
+                    'dtnasc': 'profile_field_Data',
+                    'celular': 'profile_field_Telefone',
+                    'docidentif': 'profile_field_RegistroCivil',
+                    'orgexpident': 'profile_field_OrgaoEmissor',
+                    'dataexpedicao': 'profile_field_DataExpedicao',
+                    'endereco': 'profile_field_EnderecoResidencial',
+                    'bairro': 'profile_field_Bairro',
                     'cidade': 'city',
-                    'uf': 'country'
+                    'uf': 'profile_field_Estado',
+                    'cep': 'profile_field_CEP'
                 };
 
                 // Obter campos selecionados
                 const selectedFields = Array.from(document.querySelectorAll('#fieldSelection .field-options input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);                // Manter a ordem original dos campos selecionados
+                const selectedFieldsOrder = Array.from(document.querySelectorAll('#fieldSelection .field-options input[type="checkbox"]:checked'))
                     .map(cb => cb.value);
-
-                // Criar cabeçalhos apenas para campos selecionados
-                const newHeaders = ['username', 'firstname', 'lastname', 'cohort1']; // Campos obrigatórios
-                
-                // Adicionar outros campos selecionados
-                selectedFields.forEach(field => {
-                    if (field !== 'nome_completo' && field !== 'matricula_esap' && field !== 'turma') {
-                        const moodleField = fieldMapping[field];
-                        if (moodleField && !newHeaders.includes(moodleField)) {
-                            newHeaders.push(moodleField);
-                        }
-                    }
-                });
+                const newHeaders = selectedFieldsOrder;
 
             // Função para converter UF para nome do estado
             const convertUfToState = (uf) => {
@@ -1077,63 +1213,99 @@
                     'TO': 'Tocantins'
                 };
                 return states[uf.toUpperCase()] || uf;
-            };
-
-            const newRows = rows.map(row => {                if (!row[nomeIndex]) return null;  // Pula linhas sem nome
-                const nomeCompleto = String(row[nomeIndex]).trim();
-                const nomeParts = nomeCompleto.split(' ');
-                const firstName = nomeParts[0];
-                const lastName = nomeParts.length > 1 ? nomeParts.slice(1).join(' ') : '';
-                const endereco = row[enderecoIndex] || '';
-                const bairro = row[bairroIndex] || '';
-                const enderecoCompleto = endereco && bairro ? `${endereco}, ${bairro}` : endereco || bairro;
-                const sexo = row[sexoIndex] ? (row[sexoIndex].trim().toUpperCase() === 'F' ? 'Feminino' : 
-                                             row[sexoIndex].trim().toUpperCase() === 'M' ? 'Masculino' : 
-                                             row[sexoIndex]) : '';                // Construir array apenas com campos selecionados
-                const rowData = [
-                    row[matriculaIndex]?.trim() || '',                    // username
-                    firstName,                                            // firstname
-                    lastName,                                             // lastname
-                    `turma_${(row[turmaIndex] || '').toLowerCase()}`     // cohort1
-                ];
-
-                // Adicionar outros campos selecionados na mesma ordem dos cabeçalhos
-                newHeaders.slice(4).forEach(header => {
+            };            const newRows = rows.map(row => {
+                if (!row[nomeIndex]) return null;  // Pula linhas sem nome
+                
+                // Criar array para armazenar os valores na ordem correta
+                const rowData = [];
+                
+                // Processar linha seguindo a ordem dos campos selecionados
+                newHeaders.forEach(header => {
                     switch(header) {
+                        case 'matricula_esap':
+                            rowData.push(row[matriculaIndex]?.trim() || '');
+                            break;
+                        case 'nome_completo':
+                            rowData.push(row[nomeIndex]?.trim() || '');
+                            break;
+                        case 'turma':
+                            rowData.push(row[turmaIndex]?.trim() || '');
+                            break;
                         case 'email':
                             rowData.push(row[emailIndex] || '');
                             break;
-                        case 'idnumber':
+                        case 'cpf':
                             rowData.push(row[cpfIndex] || '');
                             break;
-                        case 'gender':
-                            rowData.push(sexo || '');
+                        case 'sexo':
+                            const sexoValue = row[sexoIndex];
+                            rowData.push(sexoValue ? 
+                                (sexoValue.trim().toUpperCase() === 'F' ? 'Feminino' : 
+                                 sexoValue.trim().toUpperCase() === 'M' ? 'Masculino' : 
+                                 sexoValue) : '');
                             break;
-                        case 'phone1':
+                        case 'celular':
                             rowData.push(row[celularIndex] || '');
                             break;
-                        case 'address':
-                            rowData.push(enderecoCompleto || '');
+                        case 'endereco':                            // Extrair endereço do formato atual
+                            let enderecoCompleto = row[enderecoIndex] || '';
+                            // Remover UF e CEP se estiverem no endereço
+                            enderecoCompleto = enderecoCompleto.replace(/,\s*[A-Z]{2},?\s*\d{5}-\d{3}$/, '');
+                            rowData.push(enderecoCompleto);
                             break;
-                        case 'city':
-                            rowData.push(row[cidadeIndex] || '');
+                        case 'cidade':
+                            // Tentar extrair cidade do endereço se não estiver preenchida
+                            let cidade = row[cidadeIndex] || '';
+                            if (!cidade && row[enderecoIndex]) {
+                                const match = row[enderecoIndex].match(/([^,]+),\s*[A-Z]{2}/);
+                                if (match) {
+                                    cidade = match[1].trim();
+                                }
+                            }
+                            rowData.push(cidade);
                             break;
-                        case 'country':
-                            rowData.push(row[ufIndex]?.toUpperCase() || '');
+                        case 'uf':
+                            // Tentar extrair UF do endereço se não estiver preenchida
+                            let uf = row[ufIndex] || '';
+                            if (!uf && row[enderecoIndex]) {
+                                const match = row[enderecoIndex].match(/,\s*([A-Z]{2})/);
+                                if (match) {
+                                    uf = match[1];
+                                }
+                            }
+                            rowData.push(uf);
                             break;
+                        case 'cep':
+                            // Tentar extrair CEP do endereço se não estiver preenchido
+                            let cep = row[cepIndex] || '';
+                            if (!cep && row[enderecoIndex]) {
+                                const match = row[enderecoIndex].match(/(\d{5}-\d{3})/);
+                                if (match) {
+                                    cep = match[1];
+                                }
+                            }
+                            rowData.push(cep);
+                            break;
+                        default:
+                            rowData.push('');
                     }
                 });
 
                 return rowData;
-            });                const validRows = newRows.filter(row => row !== null);
-                const fullDataWithMoodle = [newHeaders, ...validRows];
-                const BOM = "\uFEFF";
-                const csvContent = Utils.convertToCSV(fullDataWithMoodle);
-                const csvContentWithBOM = BOM + csvContent;
-                
-                const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
-                saveAs(blob, 'dados_completos.csv');
-                Utils.showNotification('Arquivo com todos os campos baixado com sucesso!');
+            });                    const BOM = "\uFEFF";
+                    const csvContent = Utils.convertToCSV(fullData);
+                    const csvContentWithBOM = BOM + csvContent;
+                    
+                    const blob = new Blob([csvContentWithBOM], { 
+                        type: 'text/csv;charset=utf-8;'
+                    });
+                    
+                    saveAs(blob, 'dados_completos.csv');
+                    Utils.showNotification('Arquivo com todos os campos baixado com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao gerar CSV:', error);
+                    Utils.showNotification('Erro ao gerar o arquivo CSV', 'error');
+                }
             }
         }
 
